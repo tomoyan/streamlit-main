@@ -16,3 +16,6 @@ pip freeze > requirements.txt
 
 ## RUN STREAMLIT
 * streamlit run your_script.py [-- script args]
+
+## STREAMLIT CLOUD DEPLOY
+* share.streamlit.io

@@ -104,7 +104,7 @@ def get_community_list():
 
 
 """
-# [Club Tag Members](/)
+# [Club Tag Members](https://share.streamlit.io/tomoyan/streamlit-main/main)
 Check last 30 day transactions for active(24H) members who used club tags\n
 #club5050 #club100 #club75
 """
@@ -118,13 +118,6 @@ option = st.selectbox(
 community_tag = option.split(' - ')[0]
 
 st.write('Selected community:', community_tag)
-
-# st.text_input(
-#     "Enter Community Tag",
-#     key="community_tag",
-#     help='e.g. hive-161179',
-#     placeholder='hive-161179')
-# community_tag = st.session_state.community_tag
 
 
 if community_tag:
