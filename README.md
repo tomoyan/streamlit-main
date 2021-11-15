@@ -16,11 +16,8 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 
 ## RUN STREAMLIT
-<<<<<<< HEAD
 * streamlit run your_script.py [-- script args]
 
 ## STREAMLIT CLOUD DEPLOY
-* share.streamlit.io
-=======
-streamlit run your_script.py [-- script args]
->>>>>>> parent of 37ba677... update readme
+* Login to share.streamlit.io
+
