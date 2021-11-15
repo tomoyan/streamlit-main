@@ -15,4 +15,4 @@ pip install -r requirements.txt
 pip freeze > requirements.txt
 
 ## RUN STREAMLIT
-streamlit run your_script.py [-- script args]
+* streamlit run your_script.py [-- script args]
