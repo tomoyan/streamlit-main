@@ -245,7 +245,7 @@ def get_reward_data(username='japansteemit'):
 def style_negative_number(value, props=''):
     # Change number to red if float value is less than 0.0
     if isinstance(value, float) and value < 0:
-        props = 'color:red;'
+        props = 'background-color:red; color:white;'
 
     return props
 
@@ -253,9 +253,9 @@ def style_negative_number(value, props=''):
 def style_club_number(value, props='', powerup=0.0):
     # Change value to green if value is more than powerup
     if value <= powerup:
-        props = 'color:green;'
+        props = 'background-color:green; color:white;'
     else:
-        props = 'color:red;'
+        props = 'background-color:red; color:white;'
 
     return props
 
