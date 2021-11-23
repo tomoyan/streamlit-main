@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 import requests
 import json
-
+from PIL import Image
 import config as cfg
 
 # from beem import Steem
@@ -360,9 +360,10 @@ def draw_pie_chart(data):
         explode = (0, 0.1)  # only "explode" the 2nd slice
 
         figure, ax1 = plt.subplots()
+        colors = ['#f9c74f', '#f94144']
         ax1.pie(
             sizes, explode=explode, labels=labels, autopct='%1.1f%%',
-            shadow=None, startangle=90)
+            shadow=None, startangle=90, colors=colors)
         # Equal aspect ratio ensures that pie is drawn as a circle.
         ax1.axis('equal')
 
@@ -379,11 +380,6 @@ def draw_pie_chart(data):
 
 
 def main():
-    # Sidebar Menu
-    sidebar = st.sidebar.selectbox(
-        "Menu",
-        ("Community Check", "Individual Check")
-    )
 
     with st.expander("What is Club5050?"):
         st.write(
@@ -404,8 +400,29 @@ You are not eligible the club if...
 * You are not using your Steem Power to vote regularly.
             """)
 
+    # Sidebar Menu
+    # sidebar = st.sidebar.selectbox(
+    #     "Menu",
+    #     ("Home", "Community Check", "Individual Check"),
+    #     key='sidebar'
+    # )
+
+    # Main Menu
+    option = st.selectbox(
+        'Select option ...',
+        ('Home', 'Community Check', 'Individual Check'),
+        key='main_option'
+    )
+
+    # Main page
+    if option == 'Home':
+        image = Image.open('images/main.png')
+        st.image(image, caption='Powered by @tomoyan')
+
+        st.stop()
+
     # Chcek club tags for community
-    if sidebar == 'Community Check':
+    elif option == 'Community Check':
         show_community_header()
 
         communities = get_community_list()
@@ -423,7 +440,7 @@ You are not eligible the club if...
         else:
             st.stop()
     # Chcek club tags for individual
-    elif sidebar == 'Individual Check':
+    elif option == 'Individual Check':
         username = show_individual_header()
 
         if username:
@@ -435,10 +452,6 @@ You are not eligible the club if...
                 st.stop()
         else:
             st.stop()
-
-    else:
-        st.header('Select an option')
-        st.stop()
 
 
 if __name__ == '__main__':
