@@ -57,56 +57,6 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
     return club_users
 
 
-# @st.cache
-# def check_transfers(username='japansteemit'):
-#     # Get total transfer and power up amount for the last 30 days
-#     result = {
-#         'power_up': 0.0,
-#         'transfer': 0.0,
-#         'reward_sp': 0.0,
-#         'club50_sp': 0.0,
-#         'club75_sp': 0.0,
-#         'club100_sp': 0.0,
-#         'delegations': [],
-#     }
-
-#     stop = datetime.utcnow() - timedelta(days=30)
-
-#     try:
-#         ACCOUNT = Account(username)
-#     except AccountDoesNotExistsException:
-#         return None
-
-#     reward_data = get_reward_data(username)
-
-#     # Get delegation list
-#     delegations = []
-#     for d in ACCOUNT.get_vesting_delegations():
-#         delegations.append(d['delegatee'])
-
-#     result['delegations'] = delegations
-
-#     account_data = ACCOUNT.history_reverse(
-#         stop=stop, only_ops=['transfer', 'transfer_to_vesting'])
-
-#     for d in account_data:
-#         if d['type'] == 'transfer' and d['to'] != username:
-#             result['transfer'] += float(d['amount']['amount'])
-#         elif d['type'] == 'transfer_to_vesting':
-#             if d['from'] == d['to']:
-#                 result['power_up'] += float(d['amount']['amount'])
-#         else:
-#             continue
-
-#     result['power_up'] /= 1000
-#     result['transfer'] /= 1000
-#     result['reward_sp'] = reward_data['reward_sp']
-#     result['club50_sp'] = reward_data['club50_sp']
-#     result['club75_sp'] = reward_data['club75_sp']
-#     result['club100_sp'] = reward_data['club100_sp']
-
-#     return result
-
 @st.cache
 def get_powerups(url):
     power_up = 0.0
@@ -296,7 +246,7 @@ def show_individual_header():
 
     username = st.text_input('Enter Username', placeholder='Username')
 
-    return username.strip()
+    return username.strip().lower()
 
 
 def show_community_list(communities):
@@ -399,13 +349,6 @@ You are not eligible the club if...
 * You are delegating to any 'investment services' or bid-bots.
 * You are not using your Steem Power to vote regularly.
             """)
-
-    # Sidebar Menu
-    # sidebar = st.sidebar.selectbox(
-    #     "Menu",
-    #     ("Home", "Community Check", "Individual Check"),
-    #     key='sidebar'
-    # )
 
     # Main Menu
     option = st.selectbox(
