@@ -314,6 +314,10 @@ def show_community_list(communities):
 def draw_pie_chart(data):
     pie_total = sum([data['power_up'], data['transfer']])
 
+    st.subheader('Outgoing Delegations')
+    st.caption('Not eligible if delegate to investment services or bid-bots')
+    st.write(data['delegations'])
+
     st.subheader('Power Up At Least 50% Of Earnings')
     st.text(
         f'Earned Reward: {data["reward_sp"]:.3f} STEEM\
@@ -372,10 +376,6 @@ def draw_pie_chart(data):
         ax1.pie(sizes, labels=labels, colors=colors)
 
         st.pyplot(figure)
-
-    st.subheader('Outgoing Delegations')
-    st.caption('Not eligible if delegate to investment services or bid-bots')
-    st.write(data['delegations'])
 
 
 def main():
