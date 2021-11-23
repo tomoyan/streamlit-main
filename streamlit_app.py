@@ -252,7 +252,7 @@ def style_negative_number(value, props=''):
 
 def style_club_number(value, props='', powerup=0.0):
     # Change value to green if value is more than powerup
-    if value <= powerup:
+    if value <= powerup > 0:
         props = 'background-color:green; color:white;'
     else:
         props = 'background-color:red; color:white;'
