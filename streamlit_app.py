@@ -36,23 +36,26 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
     d = Discussions()
     posts = d.get_discussions('created', query, limit=10000)
 
-    # Save posts that are less than the duration(24h)
-    for post in posts:
-        if post.time_elapsed().total_seconds() < duration:
-            if any(tag in post['tags'] for tag in club_tags):
-                if post['author'] in club_users:
-                    continue
-                else:
-                    result = check_transfers(post['author'])
-                    club_users.append({
-                        'Username': post['author'],
-                        'Reward': result['reward_sp'],
-                        'Power up': result['power_up'],
-                        'Transfer': result['transfer'],
-                        'Diff +,-': result['power_up'] - result['transfer'],
-                    })
-        else:
-            break
+    try:
+        # Save posts that are less than the duration(24h)
+        for post in posts:
+            if post.time_elapsed().total_seconds() < duration:
+                if any(tag in post['tags'] for tag in club_tags):
+                    if post['author'] in club_users:
+                        continue
+                    else:
+                        tx = check_transfers(post['author'])
+                        club_users.append({
+                            'Username': post['author'],
+                            'Reward': tx['reward_sp'],
+                            'Power up': tx['power_up'],
+                            'Transfer': tx['transfer'],
+                            'Diff +,-': tx['power_up'] - tx['transfer'],
+                        })
+            else:
+                break
+    except (TypeError, AttributeError):
+        club_users = []
 
     return club_users
 
@@ -83,15 +86,13 @@ def get_transfers(url):
 
 
 @st.cache
-def check_transfers(username='japansteemit'):
-    # Get total transfer and power up amount for the last 30 days
+def check_transfers(username='japansteemit', days=30):
+    # Get total transfer and power up amount
     result = {
         'power_up': 0.0,
         'transfer': 0.0,
         'reward_sp': 0.0,
-        'club50_sp': 0.0,
-        'club75_sp': 0.0,
-        'club100_sp': 0.0,
+        'target_sp': 0.0,
         'delegations': [],
     }
 
@@ -100,7 +101,7 @@ def check_transfers(username='japansteemit'):
     except AccountDoesNotExistsException:
         return None
 
-    reward_data = get_reward_data(username)
+    reward_data = get_reward_data(username, days)
 
     # Get delegation list
     delegations = []
@@ -109,8 +110,8 @@ def check_transfers(username='japansteemit'):
 
     result['delegations'] = delegations
 
-    # Get power up and transfer data for last 30 days
-    start = date.today() - timedelta(days=30)
+    # Get power up and transfer data
+    start = date.today() - timedelta(days=days)
     stop = date.today()
     start_epoch = int(
         datetime(start.year, start.month,
@@ -120,6 +121,7 @@ def check_transfers(username='japansteemit'):
 
     # /transfers_api/getTransfers/{"type":"transfer","to":"steemchiller"}
     endpoint = 'https://sds.steemworld.org/transfers_api/getTransfers'
+
     # Check power ups
     power_up_query = {
         "type": "transfer_to_vesting",
@@ -145,23 +147,19 @@ def check_transfers(username='japansteemit'):
     result['transfer'] = get_transfers(url)
 
     result['reward_sp'] = reward_data['reward_sp']
-    result['club50_sp'] = reward_data['club50_sp']
-    result['club75_sp'] = reward_data['club75_sp']
-    result['club100_sp'] = reward_data['club100_sp']
+    result['target_sp'] = reward_data['target_sp']
 
     return result
 
 
 @st.cache
-def get_reward_data(username='japansteemit'):
+def get_reward_data(username='japansteemit', days=30):
     reward_data = {
         'reward_sp': 0.0,
-        'club50_sp': 0.0,
-        'club75_sp': 0.0,
-        'club100_sp': 0.0,
+        'target_sp': 0.0,
     }
 
-    start = date.today() - timedelta(days=30)
+    start = date.today() - timedelta(days=days)
     stop = date.today()
 
     start_epoch = int(
@@ -185,9 +183,13 @@ def get_reward_data(username='japansteemit'):
 
         reward_sp = STEEM.vests_to_sp(reward_vests)
         reward_data['reward_sp'] = reward_sp
-        reward_data['club50_sp'] = reward_sp * 0.5
-        reward_data['club75_sp'] = reward_sp * 0.75
-        reward_data['club100_sp'] = reward_sp
+
+        if days == 30:
+            reward_data['target_sp'] = reward_sp * 0.5
+        elif days == 60:
+            reward_data['target_sp'] = reward_sp * 0.75
+        elif days == 90:
+            reward_data['target_sp'] = reward_sp
 
     return reward_data
 
@@ -241,7 +243,7 @@ def show_individual_header():
     """)
 
     st.text("""
-        Check last 30 day transactions for power ups and transfers (cash out)
+        Check transactions for power ups and transfers (cash out)
     """)
 
     username = st.text_input('Enter Username', placeholder='Username')
@@ -261,50 +263,57 @@ def show_community_list(communities):
     return community_tag
 
 
-def draw_pie_chart(data):
-    pie_total = sum([data['power_up'], data['transfer']])
-
+def show_delegations(data):
     st.subheader('Outgoing Delegations')
     st.caption('Not eligible if delegate to investment services or bid-bots')
     st.write(data['delegations'])
 
-    st.subheader('Power Up At Least 50% Of Earnings')
-    st.text(
-        f'Earned Reward: {data["reward_sp"]:.3f} STEEM\
-        Power Up Total: {data["power_up"]:.3f} STEEM')
 
-    if data["power_up"] >= data["reward_sp"]:
+def show_progress(data, club):
+    if club == 50:
+        st.subheader('#Club5050 (30 days)')
+    elif club == 75:
+        st.subheader('#Club75 (60 days)')
+    elif club == 100:
+        st.subheader('#Club100 (90 days)')
+
+    # st.subheader('Power Up At Least 50% Of Earnings')
+    st.text(f'Earned Reward:\n {data["reward_sp"]:.3f} STEEM')
+    st.text(f'Power Up Target (est):\n {data["target_sp"]:.3f} STEEM')
+    st.text(f'Powered Up Total:\n {data["power_up"]:.3f} STEEM')
+
+    if data["power_up"] == 0:
+        progress_value = 0
+        st.error(f'Not eligible. Progress: {progress_value*100:.2f} %')
+    elif data["power_up"] > data["target_sp"]:
         progress_value = 1.0
+        st.success('Looking good 👍')
     else:
-        progress_value = data["power_up"] / data["reward_sp"]
+        progress_value = data["power_up"] / data["target_sp"]
+        st.warning(f'Not eligible. Club progress: {progress_value*100:.2f} %')
 
-    st.caption(f'Club progress: {progress_value*100:.2f} %')
     st.progress(progress_value)
+    # st.caption(f'Progress: {progress_value*100:.2f} %')
 
-    data_array = np.array([
-        [data["club50_sp"], data["club75_sp"], data["club100_sp"]]
-    ])
 
-    pd.set_option("display.precision", 3)
-    df = pd.DataFrame(
-        data_array,
-        index=['Eligible Club (estimate)'],
-        columns=['Club5050', 'Club75', 'Club100'])
+def draw_pie_chart(data, club):
+    if club == 50:
+        st.subheader('Last 30 days')
+    elif club == 75:
+        st.subheader('Last 60 days')
+    elif club == 100:
+        st.subheader('Last 90 days')
 
-    st.table(
-        df.style.applymap(
-            style_club_number, props='',
-            powerup=data['power_up'])
-    )
+    pie_total = sum([data['power_up'], data['transfer']])
 
-    st.subheader('Transaction Ratio (Power Up More Than Transfer)')
     if pie_total:
         labels = 'Power Up', 'Transfer'
         power_up = data['power_up'] / pie_total * 100
         transfer = data['transfer'] / pie_total * 100
         st.text(
-            f'Power Up: {power_up:.3f} % ({data["power_up"]:.3f} STEEM)\
-            Transfer: {transfer:.3f} % ({data["transfer"]:.3f} STEEM)')
+            f'Power Up:\n {power_up:.3f}%\n ({data["power_up"]:.3f} STEEM)')
+        st.text(
+            f'Transfer:\n {transfer:.3f}%\n ({data["transfer"]:.3f} STEEM)')
 
         sizes = [power_up, transfer]
         explode = (0, 0.1)  # only "explode" the 2nd slice
@@ -313,9 +322,16 @@ def draw_pie_chart(data):
         colors = ['#f9c74f', '#f94144']
         ax1.pie(
             sizes, explode=explode, labels=labels, autopct='%1.1f%%',
-            shadow=None, startangle=90, colors=colors)
+            shadow=None, startangle=90, colors=colors, radius=0.5)
         # Equal aspect ratio ensures that pie is drawn as a circle.
         ax1.axis('equal')
+
+        if data['power_up'] == 0:
+            st.error('No power up')
+        elif data['power_up'] < data['transfer']:
+            st.warning('Need more power up')
+        elif data['power_up'] >= data['transfer']:
+            st.success('Looking good 👍')
 
         st.pyplot(figure)
 
@@ -326,20 +342,51 @@ def draw_pie_chart(data):
         colors = ['#d5dbdb', '#d5dbdb']  # Grey color
         ax1.pie(sizes, labels=labels, colors=colors)
 
+        st.error('No power up')
+
         st.pyplot(figure)
 
 
+def _set_block_container_width(
+    max_width: int = 1200,
+    max_width_100_percent: bool = False,
+    padding_top: int = 5,
+    padding_right: int = 1,
+    padding_left: int = 1,
+    padding_bottom: int = 10,
+):
+    if max_width_100_percent:
+        max_width_str = f"max-width: 100%;"
+    else:
+        max_width_str = f"max-width: {max_width}px;"
+    st.markdown(
+        f"""
+<style>
+    .reportview-container .main .block-container{{
+        {max_width_str}
+        padding-top: {padding_top}rem;
+        padding-right: {padding_right}rem;
+        padding-left: {padding_left}rem;
+        padding-bottom: {padding_bottom}rem;
+    }}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
 def main():
+    _set_block_container_width()
 
     with st.expander("What is Club5050?"):
         st.write(
             """
-To take part in Club5050,
-power up more than 50% of the liquid rewards you earned.
-Anytime you cash out or transfer away any STEEM or SBD,
-you must power up an equal (or greater amount) at the same time.
+To take part in #club5050,
+you must be powering up at least 50% of your earnings,
+and over the previous 30 days,
+any cash-outs or transfers must be matched by equal or greater power-ups.
 \n
-Use #club5050, #club100, #club75 tags on your post.
+Use #club5050, #club100, #club75 tags on your post if you are eligible.\n
 Read more: https://tinyurl.com/club5050v2
 
 You are not eligible the club if...
@@ -387,9 +434,36 @@ You are not eligible the club if...
         username = show_individual_header()
 
         if username:
-            transfer_data = check_transfers(username)
-            if transfer_data:
-                draw_pie_chart(transfer_data)
+            transfer_data_30 = check_transfers(username, 30)
+
+            if transfer_data_30:
+                show_delegations(transfer_data_30)
+
+                transfer_data_60 = check_transfers(username, 60)
+                transfer_data_90 = check_transfers(username, 90)
+
+                st.subheader(
+                    '* Have you powered up at least 50% of your earnings?')
+                st.caption('Power up your eanings for #club5050 tag')
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    show_progress(transfer_data_30, 50)
+                with col2:
+                    show_progress(transfer_data_60, 75)
+                with col3:
+                    show_progress(transfer_data_90, 100)
+
+                st.subheader('* Have you powered up more than you transfered?')
+                st.caption('Any transfers must be matched by power-ups')
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    draw_pie_chart(transfer_data_30, 50)
+                with col2:
+                    draw_pie_chart(transfer_data_60, 75)
+                with col3:
+                    draw_pie_chart(transfer_data_90, 100)
             else:
                 st.error('Account Does Not Exist')
                 st.stop()
