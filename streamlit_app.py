@@ -23,6 +23,7 @@ cfg.app_config()
 
 # Set up steem
 STEEM = cfg.setup_steem()
+# print(STEEM)
 
 
 @st.cache
@@ -45,12 +46,18 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
                         continue
                     else:
                         tx = check_transfers(post['author'])
+                        percentage = 0.0
+                        if tx['reward_sp']:
+                            percentage = tx['power_up'] / tx['reward_sp'] * 100
+                        diff = tx['power_up'] - tx['transfer']
+
                         club_users.append({
                             'Username': post['author'],
-                            'Reward': tx['reward_sp'],
+                            'Earned Reward': tx['reward_sp'],
                             'Power up': tx['power_up'],
+                            'Power up %': float(percentage),
                             'Transfer': tx['transfer'],
-                            'Diff +,-': tx['power_up'] - tx['transfer'],
+                            'Power up - Transfer (Diff)': diff,
                         })
             else:
                 break
@@ -196,17 +203,15 @@ def get_reward_data(username='japansteemit', days=30):
 
 def style_negative_number(value, props=''):
     # Change number to red if float value is less than 0.0
-    if isinstance(value, float) and value < 0:
+    if value < 0:
         props = 'background-color:red; color:white;'
 
     return props
 
 
-def style_club_number(value, props='', powerup=0.0):
-    # Change value to green if value is more than powerup
-    if value <= powerup > 0:
-        props = 'background-color:green; color:white;'
-    else:
+def style_powerup_percentage(value, props=''):
+    # Change number to red if powerup is less than 50%
+    if value < 50:
         props = 'background-color:red; color:white;'
 
     return props
@@ -423,10 +428,22 @@ You are not eligible the club if...
             pd.set_option("display.precision", 3)
             df = pd.DataFrame(users)
 
-            # apply color to numbers and display dataframe
-            st.dataframe(
-                df.style.applymap(style_negative_number, props=''),
-                height=2500)
+            # check empty dataframe
+            if df.empty:
+                st.warning('No club tags found')
+            else:
+                # apply color to column: Power up - Transfer (Diff)
+                style_df = df.style.applymap(
+                    style_negative_number,
+                    subset=['Power up - Transfer (Diff)'])
+
+                # apply color to column: Power up %
+                style_df = style_df.applymap(
+                    style_powerup_percentage,
+                    subset=['Power up %'])
+
+                st.dataframe(style_df, height=2500)
+
         else:
             st.stop()
     # Chcek club tags for individual
@@ -453,6 +470,8 @@ You are not eligible the club if...
                     show_progress(transfer_data_60, 75)
                 with col3:
                     show_progress(transfer_data_90, 100)
+
+                st.markdown('---')
 
                 st.subheader('* Have you powered up more than you transfered?')
                 st.caption('Any transfers must be matched by power-ups')

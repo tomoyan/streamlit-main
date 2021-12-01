@@ -30,7 +30,7 @@ def setup_steem():
         'https://steem.justyy.workers.dev',
         'https://api.steem.fans',
         'https://api.steemit.com',
-        'https://cn.steems.top',
+        # 'https://cn.steems.top',
         'https://api.steem.buzz',
         'https://steem.61bts.com']
     random.shuffle(nodes)
