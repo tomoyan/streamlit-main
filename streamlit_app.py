@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-# import random
 from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 import requests
@@ -9,11 +7,8 @@ import json
 from PIL import Image
 import config as cfg
 
-# from beem import Steem
 from beem.account import Account
 from beem.community import Communities
-# from beem.nodelist import NodeList
-# from beem.instance import set_shared_blockchain_instance
 from beem.discussions import Query, Discussions
 from beem.exceptions import AccountDoesNotExistsException
 
