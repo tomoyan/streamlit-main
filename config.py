@@ -26,13 +26,18 @@ def setup_steem():
     nodelist.update_nodes()
     # nodes = nodelist.get_steem_nodes()
     nodes = [
+        'https://steemd.steemworld.org',
+        'https://api.steemzzang.com',
+        'https://api.justyy.com',
         'https://api.steemitdev.com',
         'https://steem.justyy.workers.dev',
         'https://api.steem.fans',
         'https://api.steemit.com',
-        # 'https://cn.steems.top',
         'https://api.steem.buzz',
-        'https://steem.61bts.com']
+        'https://steem.61bts.com',
+        # 'https://cn.steems.top',
+    ]
+
     random.shuffle(nodes)
     STEEM = Steem(node=nodes)
     set_shared_blockchain_instance(STEEM)

@@ -31,6 +31,7 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
     # Get community posts for the last 24H
     club_tags = ['club5050', 'club100', 'club75']
     club_users = []
+    authors = []
 
     # Get community posts
     query = Query(tag=community_tag)
@@ -42,7 +43,7 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
         for post in posts:
             if post.time_elapsed().total_seconds() < duration:
                 if any(tag in post['tags'] for tag in club_tags):
-                    if post['author'] in club_users:
+                    if post['author'] in authors:
                         continue
                     else:
                         tx = check_transfers(post['author'])
@@ -55,10 +56,11 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
                             'Username': post['author'],
                             'Earned Reward': tx['reward_sp'],
                             'Power up': tx['power_up'],
-                            'Power up %': float(percentage),
+                            'Power up %': f'{float(percentage):.2f} %',
                             'Transfer': tx['transfer'],
                             'Power up - Transfer (Diff)': diff,
                         })
+                        authors.append(post['author'])
             else:
                 break
     except (TypeError, AttributeError):
@@ -211,6 +213,8 @@ def style_negative_number(value, props=''):
 
 def style_powerup_percentage(value, props=''):
     # Change number to red if powerup is less than 50%
+    value = float(value.split()[0])
+
     if value < 50:
         props = 'background-color:red; color:white;'
 
