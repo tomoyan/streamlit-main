@@ -20,8 +20,11 @@ cfg.app_config()
 STEEM = cfg.setup_steem()
 # print(STEEM)
 
+# 12 hours in seconds
+TTL = 43200
 
-@st.cache
+
+@st.cache(ttl=TTL)
 def retrieve_club_members(duration=86400, community_tag='hive-161179'):
     # Get community posts for the last 24H
     club_tags = ['club5050', 'club100', 'club75']
@@ -64,7 +67,7 @@ def retrieve_club_members(duration=86400, community_tag='hive-161179'):
     return club_users
 
 
-@st.cache
+@st.cache(ttl=TTL)
 def get_powerups(url):
     power_up = 0.0
     power_up_res = requests.get(url)
@@ -77,7 +80,7 @@ def get_powerups(url):
     return power_up
 
 
-@st.cache
+@st.cache(ttl=TTL)
 def get_transfers(url):
     transfer = 0.0
     transfer_res = requests.get(url)
@@ -89,7 +92,7 @@ def get_transfers(url):
     return transfer
 
 
-@st.cache
+@st.cache(ttl=TTL)
 def check_transfers(username='japansteemit', days=30):
     # Get total transfer and power up amount
     result = {
@@ -156,7 +159,7 @@ def check_transfers(username='japansteemit', days=30):
     return result
 
 
-@st.cache
+@st.cache(ttl=TTL)
 def get_reward_data(username='japansteemit', days=30):
     reward_data = {
         'reward_sp': 0.0,
@@ -216,7 +219,7 @@ def style_powerup_percentage(value, props=''):
     return props
 
 
-@st.cache
+@st.cache(ttl=86400)
 def get_community_list():
     communities = Communities()
     community_list = ['']
