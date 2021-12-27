@@ -20,8 +20,8 @@ cfg.app_config()
 STEEM = cfg.setup_steem()
 # print(STEEM)
 
-# 12 hours in seconds
-TTL = 43200
+# 24 hours in seconds
+TTL = 86400
 
 
 @st.cache(ttl=TTL)
@@ -219,7 +219,7 @@ def style_powerup_percentage(value, props=''):
     return props
 
 
-@st.cache(ttl=86400)
+@st.cache(ttl=TTL)
 def get_community_list():
     communities = Communities()
     community_list = ['']
